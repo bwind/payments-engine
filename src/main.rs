@@ -4,10 +4,13 @@ use anyhow::{Context, Result};
 use tracing::error;
 
 use crate::{
+    account_writer::writer::AccountWriter,
     engine::{Engine, InMemoryEngine},
     transaction_reader::reader::RawTransactionReader,
 };
 
+mod account_writer;
+mod domain;
 mod engine;
 mod transaction_reader;
 
@@ -40,15 +43,13 @@ fn run() -> Result<()> {
         }
     }
 
-    // TODO: move to AccountWriter
-    let mut writer = csv::WriterBuilder::new()
-        .has_headers(true)
-        .from_writer(std::io::stdout());
-    writer.write_record(["client", "available", "held", "total", "locked"])?;
+    let mut writer = AccountWriter::new(std::io::stdout());
 
-    engine
-        .flush_accounts(writer)
-        .context("Failed to flush remaining accounts")?;
+    for account in engine.accounts().values() {
+        if let Err(e) = writer.write(account) {
+            error!("Failed to write account: {:?}", e);
+        }
+    }
 
     Ok(())
 }

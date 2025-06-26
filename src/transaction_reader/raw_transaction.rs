@@ -6,6 +6,7 @@ pub struct RawTransaction {
     #[serde(rename = "type")]
     tx_type: RawTransactionType,
     client: u16,
+    #[allow(dead_code)]
     tx: u32,
     amount: Option<Decimal>,
 }
@@ -27,10 +28,6 @@ impl RawTransaction {
 
     pub fn client(&self) -> u16 {
         self.client
-    }
-
-    pub fn tx(&self) -> u32 {
-        self.tx
     }
 
     pub fn amount(&self) -> Option<Decimal> {
