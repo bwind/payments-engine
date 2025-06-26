@@ -70,7 +70,17 @@ impl Account {
                     self.available += resolved_tx.amount();
                 }
             }
-            RawTransactionType::Chargeback => {}
+            RawTransactionType::Chargeback => {
+                // A chargeback locks the account and moves held funds to total.
+                let Some(chargeback_tx) = self.transactions.get_mut(&tx.tx()) else {
+                    return Err(TransactionError::TransactionNotFound(tx.tx()));
+                };
+                if chargeback_tx.chargeback().is_ok() {
+                    self.locked = true;
+                    self.held -= chargeback_tx.amount();
+                    self.update_total();
+                }
+            }
         }
 
         Ok(())

@@ -42,3 +42,16 @@ fn test_resolve() {
         .success()
         .stdout(predicate::str::contains(&expected));
 }
+
+#[test]
+fn test_chargeback() {
+    // Verifies that disputes and chargebacks are processed correctly
+    let expected = fs::read_to_string("tests/data/chargeback_out.csv").unwrap();
+
+    Command::cargo_bin("payments-engine")
+        .unwrap()
+        .arg("tests/data/chargeback_in.csv")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(&expected));
+}

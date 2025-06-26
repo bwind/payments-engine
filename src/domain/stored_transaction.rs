@@ -11,6 +11,7 @@ enum TransactionState {
     Normal,
     Disputed,
     Resolved,
+    Chargeback,
 }
 
 pub struct StoredTransaction {
@@ -72,6 +73,16 @@ impl StoredTransaction {
             _ => Err(TransactionError::InvalidResolveTransition),
         }
     }
+
+    pub fn chargeback(&mut self) -> Result<(), TransactionError> {
+        match self.state {
+            TransactionState::Disputed => {
+                self.state = TransactionState::Chargeback;
+                Ok(())
+            }
+            _ => Err(TransactionError::InvalidChargebackTransition),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -99,11 +110,41 @@ mod tests {
                 action: RawTransactionType::Resolve,
                 expected: Ok(TransactionState::Resolved),
             },
+            TransitionCase {
+                from: TransactionState::Disputed,
+                action: RawTransactionType::Chargeback,
+                expected: Ok(TransactionState::Chargeback),
+            },
             // Invalid transitions
             TransitionCase {
                 from: TransactionState::Normal,
                 action: RawTransactionType::Resolve,
                 expected: Err(TransactionError::InvalidResolveTransition),
+            },
+            TransitionCase {
+                from: TransactionState::Normal,
+                action: RawTransactionType::Chargeback,
+                expected: Err(TransactionError::InvalidChargebackTransition),
+            },
+            TransitionCase {
+                from: TransactionState::Chargeback,
+                action: RawTransactionType::Resolve,
+                expected: Err(TransactionError::InvalidResolveTransition),
+            },
+            TransitionCase {
+                from: TransactionState::Chargeback,
+                action: RawTransactionType::Dispute,
+                expected: Err(TransactionError::InvalidDisputeTransition),
+            },
+            TransitionCase {
+                from: TransactionState::Resolved,
+                action: RawTransactionType::Dispute,
+                expected: Err(TransactionError::InvalidDisputeTransition),
+            },
+            TransitionCase {
+                from: TransactionState::Resolved,
+                action: RawTransactionType::Chargeback,
+                expected: Err(TransactionError::InvalidChargebackTransition),
             },
         ];
 
@@ -119,6 +160,7 @@ mod tests {
             let result = match case.action {
                 RawTransactionType::Dispute => tx.dispute().map(|_| tx.state),
                 RawTransactionType::Resolve => tx.resolve().map(|_| tx.state),
+                RawTransactionType::Chargeback => tx.chargeback().map(|_| tx.state),
                 _ => panic!("Unexpected transition type: {:?}", case.action),
             };
 

@@ -15,7 +15,7 @@ The design of the payments engine is based on a simple state machine for transac
 Given more time, the following improvements could be made:
 
 - **Encapsulate transaction processing logic** (`deposit`, `withdrawal`, etc.) into separate command objects using the Command pattern. This would allow for easier extension and modification of transaction types without changing the core processing logic.
-- **Improve the State Machine implementation.** There's different (and probably better) ways of implementing state machines in Rust, such as using enums with methods for state transitions, or using concrete structs for each state (eg. `Deposit.dispute` -> `Dispute.resolve` -> `Resolve`).
+- **Improve the State Machine implementation.** There's different (and probably better) ways of implementing state machines in Rust, such as using enums with methods for state transitions, or using concrete structs for each state (eg. `Deposit.dispute` -> `Dispute.resolve` -> `Resolve`). The current implementation requires many tests and leaves room for missed cases, as the state transitions are not enforced at compile time.
 
 ## Testing
 

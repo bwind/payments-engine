@@ -17,4 +17,7 @@ pub enum TransactionError {
 
     #[error("Invalid transition for resolve")]
     InvalidResolveTransition,
+
+    #[error("Invalid transition for chargeback")]
+    InvalidChargebackTransition,
 }
