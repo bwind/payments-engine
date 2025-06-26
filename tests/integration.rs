@@ -55,3 +55,23 @@ fn test_chargeback() {
         .success()
         .stdout(predicate::str::contains(&expected));
 }
+
+#[test]
+fn test_garbage() {
+    // Verifies that garbage input is handled gracefully:
+    // - invalid RawTransactionType enum values
+    // - non-numeric client IDs
+    // - non-numeric amounts
+    // - empty transaction IDs
+    // - empty client IDs
+    // - disputes on non-existing transactions
+    // - withdrawals that exceed available funds
+    let expected = fs::read_to_string("tests/data/garbage_out.csv").unwrap();
+
+    Command::cargo_bin("payments-engine")
+        .unwrap()
+        .arg("tests/data/garbage_in.csv")
+        .assert()
+        .success()
+        .stdout(predicate::str::starts_with(&expected));
+}

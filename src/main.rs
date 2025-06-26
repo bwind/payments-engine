@@ -40,7 +40,9 @@ fn run() -> Result<()> {
                     // Skip the transaction if processing fails
                 }
             }
-            Err(e) => error!("Skipping invalid record: {:?}", e),
+            Err(_) => {
+                // Silently skip invalid transactions
+            }
         }
     }
 
