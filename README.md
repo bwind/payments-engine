@@ -27,14 +27,16 @@ With more time, the following improvements could be explored:
 * **Memory optimization**: Accounts could be flushed from memory immediately after a `chargeback` if their state is final.
 * **Better error reporting**: Include CSV line numbers and raw content in error messages for failed rows.
 * **Benchmarking**: Use the `criterion` crate to test performance on large datasets.
+* **Concurrency**: Process transactions in parallel, for instance by wrapping Engine in `Arc<Mutex<>>` to allow multiple threads to handle transactions concurrently.
 * **Total funds calculation**: Use a calculated field for `Account.total` instead of using `update_total()` after every transaction.
+* **Money struct instead of Decimal**: Use a custom `Money(u64)` struct with a 10_000 factor for performance and precision, avoiding floating-point arithmetic.
 
 ## Testing
 
 This project includes:
 
 * **Unit tests** for transaction state transitions and edge cases.
-* **Integration tests** that verify full engine output from real CSV input files.
+* **Integration tests** that verify full engine output from real CSV input files (see `tests/data`).
 
 Run all tests with:
 
