@@ -27,6 +27,7 @@ With more time, the following improvements could be explored:
 * **Memory optimization**: Accounts could be flushed from memory immediately after a `chargeback` if their state is final.
 * **Better error reporting**: Include CSV line numbers and raw content in error messages for failed rows.
 * **Benchmarking**: Use the `criterion` crate to test performance on large datasets.
+* **Total funds calculation**: Use a calculated field for `Account.total` instead of using `update_total()` after every transaction.
 
 ## Testing
 

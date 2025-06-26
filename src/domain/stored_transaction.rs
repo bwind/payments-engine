@@ -46,38 +46,31 @@ impl StoredTransaction {
     }
 
     pub fn dispute(&mut self) -> Result<(), TransactionError> {
-        match self.tx_type {
-            RawTransactionType::Deposit => {}
-            _ => return Err(TransactionError::CannotDisputeNonDeposit),
+        if self.tx_type != RawTransactionType::Deposit {
+            return Err(TransactionError::CannotDisputeNonDeposit);
+        }
+        if self.state != TransactionState::Normal {
+            return Err(TransactionError::InvalidDisputeTransition);
         }
 
-        match self.state {
-            TransactionState::Normal => {
-                self.state = TransactionState::Disputed;
-                Ok(())
-            }
-            _ => Err(TransactionError::InvalidDisputeTransition),
-        }
+        self.state = TransactionState::Disputed;
+        Ok(())
     }
 
     pub fn resolve(&mut self) -> Result<(), TransactionError> {
-        match self.state {
-            TransactionState::Disputed => {
-                self.state = TransactionState::Resolved;
-                Ok(())
-            }
-            _ => Err(TransactionError::InvalidResolveTransition),
+        if self.state != TransactionState::Disputed {
+            return Err(TransactionError::InvalidResolveTransition);
         }
+        self.state = TransactionState::Resolved;
+        Ok(())
     }
 
     pub fn chargeback(&mut self) -> Result<(), TransactionError> {
-        match self.state {
-            TransactionState::Disputed => {
-                self.state = TransactionState::Chargeback;
-                Ok(())
-            }
-            _ => Err(TransactionError::InvalidChargebackTransition),
+        if self.state != TransactionState::Disputed {
+            return Err(TransactionError::InvalidChargebackTransition);
         }
+        self.state = TransactionState::Chargeback;
+        Ok(())
     }
 }
 
