@@ -14,4 +14,7 @@ pub enum TransactionError {
 
     #[error("Transaction not found: {0}")]
     TransactionNotFound(u32),
+
+    #[error("Invalid transition for resolve")]
+    InvalidResolveTransition,
 }

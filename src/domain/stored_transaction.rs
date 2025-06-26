@@ -10,6 +10,7 @@ enum TransactionState {
     #[default]
     Normal,
     Disputed,
+    Resolved,
 }
 
 pub struct StoredTransaction {
@@ -61,6 +62,16 @@ impl StoredTransaction {
             _ => Err(TransactionError::InvalidDisputeTransition),
         }
     }
+
+    pub fn resolve(&mut self) -> Result<(), TransactionError> {
+        match self.state {
+            TransactionState::Disputed => {
+                self.state = TransactionState::Resolved;
+                Ok(())
+            }
+            _ => Err(TransactionError::InvalidResolveTransition),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -83,6 +94,11 @@ mod tests {
                 action: RawTransactionType::Dispute,
                 expected: Ok(TransactionState::Disputed),
             },
+            TransitionCase {
+                from: TransactionState::Disputed,
+                action: RawTransactionType::Resolve,
+                expected: Ok(TransactionState::Resolved),
+            },
         ];
 
         for case in cases {
@@ -96,6 +112,7 @@ mod tests {
 
             let result = match case.action {
                 RawTransactionType::Dispute => tx.dispute().map(|_| tx.state),
+                RawTransactionType::Resolve => tx.resolve().map(|_| tx.state),
                 _ => panic!("Unexpected transition type: {:?}", case.action),
             };
 

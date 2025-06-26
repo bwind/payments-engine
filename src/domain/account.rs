@@ -60,7 +60,16 @@ impl Account {
                     self.held += disputed_tx.amount();
                 }
             }
-            RawTransactionType::Resolve => {}
+            RawTransactionType::Resolve => {
+                // A resolve releases the held funds back to available.
+                let Some(resolved_tx) = self.transactions.get_mut(&tx.tx()) else {
+                    return Err(TransactionError::TransactionNotFound(tx.tx()));
+                };
+                if resolved_tx.resolve().is_ok() {
+                    self.held -= resolved_tx.amount();
+                    self.available += resolved_tx.amount();
+                }
+            }
             RawTransactionType::Chargeback => {}
         }
 
