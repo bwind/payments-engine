@@ -82,7 +82,7 @@ mod tests {
     struct TransitionCase {
         from: TransactionState,
         action: RawTransactionType,
-        expected: Result<TransactionState, &'static str>,
+        expected: Result<TransactionState, TransactionError>,
     }
 
     #[test]
@@ -98,6 +98,12 @@ mod tests {
                 from: TransactionState::Disputed,
                 action: RawTransactionType::Resolve,
                 expected: Ok(TransactionState::Resolved),
+            },
+            // Invalid transitions
+            TransitionCase {
+                from: TransactionState::Normal,
+                action: RawTransactionType::Resolve,
+                expected: Err(TransactionError::InvalidResolveTransition),
             },
         ];
 
@@ -119,7 +125,7 @@ mod tests {
             match (&result, &case.expected) {
                 (Ok(actual), Ok(expected)) => assert_eq!(actual, expected, "case: {:?}", case),
                 (Err(e), Err(expected_err)) => {
-                    assert_eq!(e.to_string(), *expected_err, "case: {:?}", case)
+                    assert_eq!(e, expected_err, "case: {:?}", case)
                 }
                 _ => panic!("Mismatched result for case: {:?} → got {:?}", case, result),
             }
