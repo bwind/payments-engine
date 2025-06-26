@@ -4,8 +4,8 @@ use rust_decimal::Decimal;
 use serde::Serialize;
 
 use crate::{
-    domain::stored_transaction::StoredTransaction, errors::TransactionError,
-    transaction_reader::raw_transaction::RawTransactionType,
+    domain::{stored_transaction::StoredTransaction, transaction_command::TransactionCommand},
+    errors::TransactionError,
 };
 
 #[derive(Serialize, Default)]
@@ -28,19 +28,22 @@ impl Account {
         }
     }
 
-    pub fn process_transaction(&mut self, tx: StoredTransaction) -> Result<(), TransactionError> {
-        if self.locked() {
+    pub fn process_transaction(
+        &mut self,
+        command: TransactionCommand,
+    ) -> Result<(), TransactionError> {
+        if self.is_locked() {
             return Err(TransactionError::AccountIsLocked);
         }
 
-        match tx.tx_type() {
-            RawTransactionType::Deposit => {
+        match command {
+            TransactionCommand::Deposit(tx) => {
                 // A deposit always increases the available balance and total balance.
                 self.available += tx.amount();
                 self.update_total();
                 self.transactions.insert(tx.tx(), tx);
             }
-            RawTransactionType::Withdrawal => {
+            TransactionCommand::Withdrawal(tx) => {
                 // A withdrawal decreases the available balance and total balance if there are
                 // sufficient funds.
                 if tx.amount() > self.available {
@@ -50,36 +53,32 @@ impl Account {
                 self.update_total();
                 self.transactions.insert(tx.tx(), tx);
             }
-            RawTransactionType::Dispute => {
+            TransactionCommand::Dispute { tx_id } => {
                 // A dispute holds the funds of a transaction, moving them from available to held.
-                let disputed_tx = self.get_transaction_mut(tx.tx())?;
-                if disputed_tx.dispute().is_ok() {
-                    let amount = disputed_tx.amount();
-                    self.available -= amount;
-                    self.held += amount;
-                }
+                let tx = self.get_transaction_mut(tx_id)?;
+                tx.dispute()?;
+                let amount = tx.amount();
+                self.available -= amount;
+                self.held += amount;
             }
-            RawTransactionType::Resolve => {
+            TransactionCommand::Resolve { tx_id } => {
                 // A resolve releases the held funds back to available.
-                let resolved_tx = self.get_transaction_mut(tx.tx())?;
-                if resolved_tx.resolve().is_ok() {
-                    let amount = resolved_tx.amount();
-                    self.held -= amount;
-                    self.available += amount;
-                }
+                let tx = self.get_transaction_mut(tx_id)?;
+                tx.resolve()?;
+                let amount = tx.amount();
+                self.held -= amount;
+                self.available += amount;
             }
-            RawTransactionType::Chargeback => {
+            TransactionCommand::Chargeback { tx_id } => {
                 // A chargeback locks the account and moves held funds to total.
-                let chargeback_tx = self.get_transaction_mut(tx.tx())?;
-                if chargeback_tx.chargeback().is_ok() {
-                    let amount = chargeback_tx.amount();
-                    self.locked = true;
-                    self.held -= amount;
-                    self.update_total();
-                }
+                let tx = self.get_transaction_mut(tx_id)?;
+                tx.chargeback()?;
+                let amount = tx.amount();
+                self.held -= amount;
+                self.locked = true;
+                self.update_total();
             }
         }
-
         Ok(())
     }
 
@@ -92,7 +91,7 @@ impl Account {
             .ok_or(TransactionError::TransactionNotFound(tx_id))
     }
 
-    pub fn locked(&self) -> bool {
+    pub fn is_locked(&self) -> bool {
         self.locked
     }
 

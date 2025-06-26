@@ -45,10 +45,6 @@ impl StoredTransaction {
         self.amount
     }
 
-    pub fn tx_type(&self) -> RawTransactionType {
-        self.tx_type
-    }
-
     pub fn dispute(&mut self) -> Result<(), TransactionError> {
         match self.tx_type {
             RawTransactionType::Deposit => {}
