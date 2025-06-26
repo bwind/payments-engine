@@ -11,7 +11,6 @@ enum TransactionState {
 pub struct StoredTransaction {
     #[allow(dead_code)]
     client: u16,
-    #[allow(dead_code)]
     tx: u32,
     amount: Decimal,
     tx_type: RawTransactionType,
@@ -32,6 +31,10 @@ impl From<RawTransaction> for StoredTransaction {
 }
 
 impl StoredTransaction {
+    pub fn tx(&self) -> u32 {
+        self.tx
+    }
+
     pub fn amount(&self) -> Decimal {
         self.amount
     }

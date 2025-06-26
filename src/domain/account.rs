@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use rust_decimal::Decimal;
 use serde::Serialize;
 
@@ -15,7 +17,7 @@ pub struct Account {
     locked: bool,
 
     #[serde(skip)]
-    transactions: Vec<StoredTransaction>,
+    transactions: BTreeMap<u32, StoredTransaction>,
 }
 
 impl Account {
@@ -35,7 +37,7 @@ impl Account {
             RawTransactionType::Deposit => {
                 self.available += tx.amount();
                 self.update_total();
-                self.transactions.push(tx);
+                self.transactions.insert(tx.tx(), tx);
             }
             RawTransactionType::Withdrawal => {
                 if tx.amount() > self.available {
@@ -43,6 +45,7 @@ impl Account {
                 }
                 self.available -= tx.amount();
                 self.update_total();
+                self.transactions.insert(tx.tx(), tx);
             }
             RawTransactionType::Dispute => {}
             RawTransactionType::Resolve => {}
