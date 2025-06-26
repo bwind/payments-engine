@@ -12,6 +12,7 @@ use crate::{
 mod account_writer;
 mod domain;
 mod engine;
+mod errors;
 mod transaction_reader;
 
 fn main() -> Result<()> {
@@ -29,9 +30,7 @@ fn run() -> Result<()> {
         .context("Usage: cargo run -- <transactions.csv>")?;
 
     let file = File::open(&path).with_context(|| format!("Failed to open input path: {}", path))?;
-
     let transaction_reader = RawTransactionReader::new(file);
-
     let mut engine = InMemoryEngine::default();
 
     for result in transaction_reader {
@@ -44,7 +43,6 @@ fn run() -> Result<()> {
     }
 
     let mut writer = AccountWriter::new(std::io::stdout());
-
     for account in engine.accounts().values() {
         if let Err(e) = writer.write(account) {
             error!("Failed to write account: {:?}", e);

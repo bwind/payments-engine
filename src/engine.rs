@@ -17,7 +17,7 @@ impl Engine for InMemoryEngine {
         self.accounts
             .entry(tx.client())
             .or_default()
-            .process_transaction(&tx);
+            .process_transaction(tx.into())?;
         Ok(())
     }
 
