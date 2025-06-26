@@ -5,7 +5,7 @@ use crate::{
     transaction_reader::raw_transaction::{RawTransaction, RawTransactionType},
 };
 
-#[derive(Default)]
+#[derive(Default, Clone, Copy, Debug, PartialEq)]
 enum TransactionState {
     #[default]
     Normal,
@@ -59,6 +59,53 @@ impl StoredTransaction {
                 Ok(())
             }
             _ => Err(TransactionError::InvalidDisputeTransition),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[derive(Debug)]
+    struct TransitionCase {
+        from: TransactionState,
+        action: RawTransactionType,
+        expected: Result<TransactionState, &'static str>,
+    }
+
+    #[test]
+    fn test_transaction_state_transitions() {
+        let cases = vec![
+            // Valid transitions
+            TransitionCase {
+                from: TransactionState::Normal,
+                action: RawTransactionType::Dispute,
+                expected: Ok(TransactionState::Disputed),
+            },
+        ];
+
+        for case in cases {
+            let mut tx = StoredTransaction {
+                client: 1,
+                tx: 1,
+                tx_type: RawTransactionType::Deposit,
+                amount: Decimal::from(1),
+                state: case.from,
+            };
+
+            let result = match case.action {
+                RawTransactionType::Dispute => tx.dispute().map(|_| tx.state),
+                _ => panic!("Unexpected transition type: {:?}", case.action),
+            };
+
+            match (&result, &case.expected) {
+                (Ok(actual), Ok(expected)) => assert_eq!(actual, expected, "case: {:?}", case),
+                (Err(e), Err(expected_err)) => {
+                    assert_eq!(e.to_string(), *expected_err, "case: {:?}", case)
+                }
+                _ => panic!("Mismatched result for case: {:?} → got {:?}", case, result),
+            }
         }
     }
 }
