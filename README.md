@@ -7,7 +7,7 @@ A simple, streaming payments engine written in Rust. It reads a CSV file of tran
 Run the engine like this:
 
 ```
-cargo run -- path/to/transactions.csv
+cargo run -- transactions.csv
 ```
 
 The engine reads the CSV line by line and prints final balances to stdout.
