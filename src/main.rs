@@ -52,6 +52,7 @@ fn run() -> Result<()> {
             error!("Failed to write account: {:?}", e);
         }
     }
+    writer.flush()?;
 
     Ok(())
 }

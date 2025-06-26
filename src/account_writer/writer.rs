@@ -1,4 +1,4 @@
-use std::io::Write;
+use std::io::{self, Write};
 
 use crate::domain::account::Account;
 
@@ -16,5 +16,9 @@ impl<W: Write> AccountWriter<W> {
 
     pub fn write(&mut self, account: &Account) -> Result<(), csv::Error> {
         self.inner.serialize(account)
+    }
+
+    pub fn flush(&mut self) -> Result<(), io::Error> {
+        self.inner.flush()
     }
 }
