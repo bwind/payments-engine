@@ -147,18 +147,18 @@ mod tests {
             };
 
             let result = match case.action {
-                RawTransactionType::Dispute => tx.dispute().map(|_| tx.state),
-                RawTransactionType::Resolve => tx.resolve().map(|_| tx.state),
-                RawTransactionType::Chargeback => tx.chargeback().map(|_| tx.state),
+                RawTransactionType::Dispute => tx.dispute().map(|()| tx.state),
+                RawTransactionType::Resolve => tx.resolve().map(|()| tx.state),
+                RawTransactionType::Chargeback => tx.chargeback().map(|()| tx.state),
                 _ => panic!("Unexpected transition type: {:?}", case.action),
             };
 
             match (&result, &case.expected) {
-                (Ok(actual), Ok(expected)) => assert_eq!(actual, expected, "case: {:?}", case),
+                (Ok(actual), Ok(expected)) => assert_eq!(actual, expected, "case: {case:?}"),
                 (Err(e), Err(expected_err)) => {
-                    assert_eq!(e, expected_err, "case: {:?}", case)
+                    assert_eq!(e, expected_err, "case: {case:?}");
                 }
-                _ => panic!("Mismatched result for case: {:?} → got {:?}", case, result),
+                _ => panic!("Mismatched result for case: {case:?} → got {result:?}"),
             }
         }
     }

@@ -29,20 +29,17 @@ fn run() -> Result<()> {
         .nth(1)
         .context("Usage: cargo run -- <transactions.csv>")?;
 
-    let file = File::open(&path).with_context(|| format!("Failed to open input path: {}", path))?;
+    let file = File::open(&path).with_context(|| format!("Failed to open input path: {path}"))?;
     let transaction_reader = RawTransactionReader::new(file);
     let mut engine = InMemoryEngine::default();
 
     for result in transaction_reader {
-        match result {
-            Ok(raw_tx) => {
-                if engine.process_transaction(raw_tx).is_err() {
-                    // Skip the transaction if processing fails
-                }
+        if let Ok(raw_tx) = result {
+            if engine.process_transaction(raw_tx).is_err() {
+                // Skip the transaction if processing fails
             }
-            Err(_) => {
-                // Silently skip invalid transactions
-            }
+        } else {
+            // Silently skip invalid transactions
         }
     }
 

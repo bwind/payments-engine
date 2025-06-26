@@ -3,8 +3,8 @@ use predicates::prelude::*;
 use std::fs;
 
 fn assert_csv_output(test_case: &str, expect_exact_match: bool) {
-    let input_path = format!("tests/data/{}_in.csv", test_case);
-    let expected_path = format!("tests/data/{}_out.csv", test_case);
+    let input_path = format!("tests/data/{test_case}_in.csv");
+    let expected_path = format!("tests/data/{test_case}_out.csv");
 
     let expected = fs::read_to_string(&expected_path)
         .unwrap_or_else(|_| panic!("Expected output file not found: {expected_path}"));
