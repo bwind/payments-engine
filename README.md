@@ -1,29 +1,42 @@
 # Payments Engine 🦀
 
-A simple payments engine written in Rust, designed to read a CSV file containing transactions and output the final account balances after processing all transactions.
+A simple, streaming payments engine written in Rust. It reads a CSV file of transactions and outputs the final balances per client.
 
 ## Usage
 
-    cargo run -- accounts.csv
+Run the engine like this:
+
+```
+cargo run -- path/to/transactions.csv
+```
+
+The engine reads the CSV line by line and prints final balances to stdout.
 
 ## Design
 
-The design of the payments engine is based on a simple state machine for transactions within accounts. The state of each transaction is managed using an enum (`TransactionState`) to represent the different states (`Normal`, `Dispute`, `Resolve`, `Chargeback`), and is enforced through methods on the `StoredTransaction` struct (`dispute`, `resolve`, `chargeback`).
+The core logic is modeled as a **state machine** for transactions. Each `StoredTransaction` tracks its state via an enum (`Normal`, `Disputed`, `Resolved`, `ChargedBack`), and transitions are enforced via explicit methods like `dispute()`, `resolve()`, and `chargeback()`.
 
-## Further Improvements
+All accounts are stored in memory, indexed by client ID, and updated incrementally as transactions are processed.
 
-Given more time, the following improvements could be made:
+## Potential Improvements
 
-- **Encapsulate transaction processing logic** (`deposit`, `withdrawal`, etc.) into separate command objects using the Command pattern. This would allow for easier extension and modification of transaction types without changing the core processing logic.
-- **Improve the State Machine implementation.** There's different (and probably better) ways of implementing state machines in Rust, such as using enums with methods for state transitions, or using concrete structs for each state (eg. `Deposit.dispute` -> `Dispute.resolve` -> `Resolve`). The current implementation requires many tests and leaves room for missed cases, as the state transitions are not enforced at compile time.
-- Rows in the input CSV file are streamed and processed one by one, allowing for efficient handling of large datasets without loading the entire file into memory. However, all transactions are stored in Accounts, which are kept in memory until the end of processing. A possible improvement would be to flush locked accounts as soon as a chargeback occurs.
+With more time, the following improvements could be explored:
+
+* **Command pattern**: Extract transaction logic (`deposit`, `withdrawal`, etc.) into separate commands to improve modularity.
+* **Stronger state transitions**: Use types to represent transaction states (e.g. `Deposit`, `DisputedDeposit`, etc.), making invalid transitions unrepresentable at compile time.
+* **Memory optimization**: Accounts could be flushed from memory immediately after a `chargeback` if their state is final.
+* **Better error reporting**: Include CSV line numbers and raw content in error messages for failed rows.
+* **Benchmarking**: Use the `criterion` crate to test performance on large datasets.
 
 ## Testing
 
-The project includes a handful of unit tests to ensure the correctness of the allowed and disallowed transitions for transactions, as well as a few integration tests to validate the CLI functionality. These integration tests treat the system as a black box, ensuring that the output matches the expected results based on input CSV files.
+This project includes:
 
-The tests can be run using:
+* **Unit tests** for transaction state transitions and edge cases.
+* **Integration tests** that verify full engine output from real CSV input files.
 
-    cargo test
+Run all tests with:
 
-Given more time, benchmark tests could be added using the `criterion` crate to measure performance, especially for large datasets.
+```
+cargo test
+```
