@@ -35,11 +35,14 @@ impl Account {
 
         match tx.tx_type() {
             RawTransactionType::Deposit => {
+                // A deposit always increases the available balance and total balance.
                 self.available += tx.amount();
                 self.update_total();
                 self.transactions.insert(tx.tx(), tx);
             }
             RawTransactionType::Withdrawal => {
+                // A withdrawal decreases the available balance and total balance if there are
+                // sufficient funds.
                 if tx.amount() > self.available {
                     return Err(TransactionError::InsufficientFunds);
                 }
@@ -47,7 +50,16 @@ impl Account {
                 self.update_total();
                 self.transactions.insert(tx.tx(), tx);
             }
-            RawTransactionType::Dispute => {}
+            RawTransactionType::Dispute => {
+                // A dispute holds the funds of a transaction, moving them from available to held.
+                let Some(disputed_tx) = self.transactions.get_mut(&tx.tx()) else {
+                    return Err(TransactionError::TransactionNotFound(tx.tx()));
+                };
+                if disputed_tx.dispute().is_ok() {
+                    self.available -= disputed_tx.amount();
+                    self.held += disputed_tx.amount();
+                }
+            }
             RawTransactionType::Resolve => {}
             RawTransactionType::Chargeback => {}
         }

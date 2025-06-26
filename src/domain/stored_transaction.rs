@@ -1,11 +1,15 @@
 use rust_decimal::Decimal;
 
-use crate::transaction_reader::raw_transaction::{RawTransaction, RawTransactionType};
+use crate::{
+    errors::TransactionError,
+    transaction_reader::raw_transaction::{RawTransaction, RawTransactionType},
+};
 
 #[derive(Default)]
 enum TransactionState {
     #[default]
     Normal,
+    Disputed,
 }
 
 pub struct StoredTransaction {
@@ -41,5 +45,20 @@ impl StoredTransaction {
 
     pub fn tx_type(&self) -> RawTransactionType {
         self.tx_type
+    }
+
+    pub fn dispute(&mut self) -> Result<(), TransactionError> {
+        match self.tx_type {
+            RawTransactionType::Deposit => {}
+            _ => return Err(TransactionError::CannotDisputeNonDeposit),
+        }
+
+        match self.state {
+            TransactionState::Normal => {
+                self.state = TransactionState::Disputed;
+                Ok(())
+            }
+            _ => Err(TransactionError::InvalidDisputeTransition),
+        }
     }
 }

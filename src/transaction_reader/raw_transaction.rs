@@ -10,7 +10,7 @@ pub struct RawTransaction {
     amount: Option<Decimal>,
 }
 
-#[derive(Deserialize, Debug, Copy, Clone)]
+#[derive(Deserialize, Debug, Copy, Clone, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum RawTransactionType {
     Deposit,
