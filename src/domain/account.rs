@@ -5,7 +5,7 @@ use serde::Serialize;
 
 use crate::{
     domain::{stored_transaction::StoredTransaction, transaction_command::TransactionCommand},
-    errors::TransactionError,
+    errors::AppError,
 };
 
 #[derive(Serialize, Default)]
@@ -28,12 +28,9 @@ impl Account {
         }
     }
 
-    pub fn process_transaction(
-        &mut self,
-        command: TransactionCommand,
-    ) -> Result<(), TransactionError> {
+    pub fn process_transaction(&mut self, command: TransactionCommand) -> Result<(), AppError> {
         if self.is_locked() {
-            return Err(TransactionError::AccountIsLocked);
+            return Err(AppError::AccountIsLocked);
         }
 
         match command {
@@ -47,7 +44,7 @@ impl Account {
                 // A withdrawal decreases the available balance and total balance if there are
                 // sufficient funds.
                 if tx.amount() > self.available {
-                    return Err(TransactionError::InsufficientFunds);
+                    return Err(AppError::InsufficientFunds);
                 }
                 self.available -= tx.amount();
                 self.update_total();
@@ -82,13 +79,10 @@ impl Account {
         Ok(())
     }
 
-    fn get_transaction_mut(
-        &mut self,
-        tx_id: u32,
-    ) -> Result<&mut StoredTransaction, TransactionError> {
+    fn get_transaction_mut(&mut self, tx_id: u32) -> Result<&mut StoredTransaction, AppError> {
         self.transactions
             .get_mut(&tx_id)
-            .ok_or(TransactionError::TransactionNotFound(tx_id))
+            .ok_or(AppError::TransactionNotFound(tx_id))
     }
 
     pub fn is_locked(&self) -> bool {

@@ -1,7 +1,7 @@
 use rust_decimal::Decimal;
 
 use crate::{
-    errors::TransactionError,
+    errors::AppError,
     transaction_reader::raw_transaction::{RawTransaction, RawTransactionType},
 };
 
@@ -45,29 +45,29 @@ impl StoredTransaction {
         self.amount
     }
 
-    pub fn dispute(&mut self) -> Result<(), TransactionError> {
+    pub fn dispute(&mut self) -> Result<(), AppError> {
         if self.tx_type != RawTransactionType::Deposit {
-            return Err(TransactionError::CannotDisputeNonDeposit);
+            return Err(AppError::CannotDisputeNonDeposit);
         }
         if self.state != TransactionState::Normal {
-            return Err(TransactionError::InvalidDisputeTransition);
+            return Err(AppError::InvalidDisputeTransition);
         }
 
         self.state = TransactionState::Disputed;
         Ok(())
     }
 
-    pub fn resolve(&mut self) -> Result<(), TransactionError> {
+    pub fn resolve(&mut self) -> Result<(), AppError> {
         if self.state != TransactionState::Disputed {
-            return Err(TransactionError::InvalidResolveTransition);
+            return Err(AppError::InvalidResolveTransition);
         }
         self.state = TransactionState::Resolved;
         Ok(())
     }
 
-    pub fn chargeback(&mut self) -> Result<(), TransactionError> {
+    pub fn chargeback(&mut self) -> Result<(), AppError> {
         if self.state != TransactionState::Disputed {
-            return Err(TransactionError::InvalidChargebackTransition);
+            return Err(AppError::InvalidChargebackTransition);
         }
         self.state = TransactionState::Chargeback;
         Ok(())
@@ -82,7 +82,7 @@ mod tests {
     struct TransitionCase {
         from: TransactionState,
         action: RawTransactionType,
-        expected: Result<TransactionState, TransactionError>,
+        expected: Result<TransactionState, AppError>,
     }
 
     #[test]
@@ -108,32 +108,32 @@ mod tests {
             TransitionCase {
                 from: TransactionState::Normal,
                 action: RawTransactionType::Resolve,
-                expected: Err(TransactionError::InvalidResolveTransition),
+                expected: Err(AppError::InvalidResolveTransition),
             },
             TransitionCase {
                 from: TransactionState::Normal,
                 action: RawTransactionType::Chargeback,
-                expected: Err(TransactionError::InvalidChargebackTransition),
+                expected: Err(AppError::InvalidChargebackTransition),
             },
             TransitionCase {
                 from: TransactionState::Chargeback,
                 action: RawTransactionType::Resolve,
-                expected: Err(TransactionError::InvalidResolveTransition),
+                expected: Err(AppError::InvalidResolveTransition),
             },
             TransitionCase {
                 from: TransactionState::Chargeback,
                 action: RawTransactionType::Dispute,
-                expected: Err(TransactionError::InvalidDisputeTransition),
+                expected: Err(AppError::InvalidDisputeTransition),
             },
             TransitionCase {
                 from: TransactionState::Resolved,
                 action: RawTransactionType::Dispute,
-                expected: Err(TransactionError::InvalidDisputeTransition),
+                expected: Err(AppError::InvalidDisputeTransition),
             },
             TransitionCase {
                 from: TransactionState::Resolved,
                 action: RawTransactionType::Chargeback,
-                expected: Err(TransactionError::InvalidChargebackTransition),
+                expected: Err(AppError::InvalidChargebackTransition),
             },
         ];
 

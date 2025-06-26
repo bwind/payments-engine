@@ -1,5 +1,5 @@
 #[derive(Debug, thiserror::Error, PartialEq)]
-pub enum TransactionError {
+pub enum AppError {
     #[error("Account is locked")]
     AccountIsLocked,
 
