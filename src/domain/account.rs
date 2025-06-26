@@ -6,16 +6,26 @@ use crate::{
     transaction_reader::raw_transaction::RawTransactionType,
 };
 
-#[derive(Default, Serialize)]
+#[derive(Serialize, Default)]
 pub struct Account {
     client: u16,
     available: Decimal,
     held: Decimal,
     total: Decimal,
     locked: bool,
+
+    #[serde(skip)]
+    transactions: Vec<StoredTransaction>,
 }
 
 impl Account {
+    pub fn new(client: u16) -> Self {
+        Self {
+            client,
+            ..Default::default()
+        }
+    }
+
     pub fn process_transaction(&mut self, tx: StoredTransaction) -> Result<(), TransactionError> {
         if self.locked() {
             return Err(TransactionError::AccountIsLocked);
@@ -25,8 +35,15 @@ impl Account {
             RawTransactionType::Deposit => {
                 self.available += tx.amount();
                 self.update_total();
+                self.transactions.push(tx);
             }
-            RawTransactionType::Withdrawal => {}
+            RawTransactionType::Withdrawal => {
+                if tx.amount() > self.available {
+                    return Err(TransactionError::InsufficientFunds);
+                }
+                self.available -= tx.amount();
+                self.update_total();
+            }
             RawTransactionType::Dispute => {}
             RawTransactionType::Resolve => {}
             RawTransactionType::Chargeback => {}

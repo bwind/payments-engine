@@ -35,9 +35,11 @@ fn run() -> Result<()> {
 
     for result in transaction_reader {
         match result {
-            Ok(raw_tx) => engine
-                .process_transaction(raw_tx)
-                .with_context(|| "Failed to process transaction")?,
+            Ok(raw_tx) => {
+                if engine.process_transaction(raw_tx).is_err() {
+                    // Skip the transaction if processing fails
+                }
+            }
             Err(e) => error!("Skipping invalid record: {:?}", e),
         }
     }

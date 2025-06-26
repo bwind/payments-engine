@@ -16,7 +16,7 @@ impl Engine for InMemoryEngine {
     fn process_transaction(&mut self, tx: RawTransaction) -> Result<(), anyhow::Error> {
         self.accounts
             .entry(tx.client())
-            .or_default()
+            .or_insert_with(|| Account::new(tx.client()))
             .process_transaction(tx.into())?;
         Ok(())
     }
