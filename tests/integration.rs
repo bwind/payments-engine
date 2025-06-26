@@ -2,7 +2,7 @@ use assert_cmd::Command;
 use predicates::prelude::*;
 use std::fs;
 
-fn assert_csv_output(test_case: &str, expect_partial_match: bool) {
+fn assert_csv_output(test_case: &str, expect_exact_match: bool) {
     let input_path = format!("tests/data/{}_in.csv", test_case);
     let expected_path = format!("tests/data/{}_out.csv", test_case);
 
@@ -15,8 +15,8 @@ fn assert_csv_output(test_case: &str, expect_partial_match: bool) {
         .assert()
         .success();
 
-    if expect_partial_match {
-        command.stdout(predicates::str::starts_with(&expected));
+    if expect_exact_match {
+        command.stdout(predicate::eq(expected));
     } else {
         command.stdout(predicate::str::contains(&expected));
     }
@@ -25,13 +25,13 @@ fn assert_csv_output(test_case: &str, expect_partial_match: bool) {
 #[test]
 fn test_simple() {
     // // Verifies that deposits and withdrawals are processed correctly
-    assert_csv_output("simple", false);
+    assert_csv_output("simple", true);
 }
 
 #[test]
 fn test_dispute() {
     // Verifies that disputes are processed correctly
-    assert_csv_output("dispute", false);
+    assert_csv_output("dispute", true);
 }
 
 #[test]
@@ -39,13 +39,13 @@ fn test_resolve() {
     // Verifies that disputes and resolves are processed correctly
     // Note that a resolved dispute produces the exact same output as a transaction that was never
     // disputed.
-    assert_csv_output("resolve", false);
+    assert_csv_output("resolve", true);
 }
 
 #[test]
 fn test_chargeback() {
     // Verifies that disputes and chargebacks are processed correctly
-    assert_csv_output("chargeback", false);
+    assert_csv_output("chargeback", true);
 }
 
 #[test]
@@ -58,5 +58,8 @@ fn test_garbage() {
     // - empty client IDs
     // - disputes on non-existing transactions
     // - withdrawals that exceed available funds
-    assert_csv_output("garbage", true);
+    //
+    // Notice that only the columns are included in garbage_out.csv, as we are mainly interested in
+    // the header and the fact that the program does not panic.
+    assert_csv_output("garbage", false);
 }
