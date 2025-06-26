@@ -16,6 +16,7 @@ Given more time, the following improvements could be made:
 
 - **Encapsulate transaction processing logic** (`deposit`, `withdrawal`, etc.) into separate command objects using the Command pattern. This would allow for easier extension and modification of transaction types without changing the core processing logic.
 - **Improve the State Machine implementation.** There's different (and probably better) ways of implementing state machines in Rust, such as using enums with methods for state transitions, or using concrete structs for each state (eg. `Deposit.dispute` -> `Dispute.resolve` -> `Resolve`). The current implementation requires many tests and leaves room for missed cases, as the state transitions are not enforced at compile time.
+- Rows in the input CSV file are streamed and processed one by one, allowing for efficient handling of large datasets without loading the entire file into memory. However, all transactions are stored in Accounts, which are kept in memory until the end of processing. A possible improvement would be to flush locked accounts as soon as a chargeback occurs.
 
 ## Testing
 
