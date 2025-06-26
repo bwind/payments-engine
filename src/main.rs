@@ -2,7 +2,7 @@ use std::fs::File;
 
 use anyhow::{Context, Result};
 
-use crate::transaction_reader::raw_transaction::RawTransaction;
+use crate::transaction_reader::reader::RawTransactionReader;
 
 mod transaction_reader;
 
@@ -17,13 +17,9 @@ fn run() -> Result<()> {
 
     let file = File::open(&path).with_context(|| format!("Failed to open input path: {}", path))?;
 
-    let reader = csv::ReaderBuilder::new()
-        .has_headers(true)
-        .trim(csv::Trim::All)
-        .from_reader(file)
-        .into_deserialize::<RawTransaction>();
+    let transaction_reader = RawTransactionReader::new(file);
 
-    for result in reader {
+    for result in transaction_reader {
         match result {
             Ok(raw_tx) => {
                 println!(
